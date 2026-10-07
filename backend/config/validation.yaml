@@ -1,0 +1,4 @@
+count_tolerance_abs: 0          # technical validation: counts must match exactly
+control_total_tolerance_abs: 0.01
+control_total_tolerance_pct: 0.0
+max_attempts_per_step: 3

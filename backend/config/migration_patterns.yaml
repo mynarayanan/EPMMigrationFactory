@@ -1,0 +1,12 @@
+patterns:
+  cloud_to_cloud:
+    label: "Cloud EPM -> Cloud EPM (snapshot)"
+    steps:
+      - {key: backup_source, name: "Backup source (snapshot)", action: backup_source, retryable: true}
+      - {key: validate_target, name: "Validate target", action: validate_target, retryable: true}
+      - {key: export_snapshot, name: "Export migration snapshot", action: export_snapshot, retryable: true}
+      - {key: transfer_snapshot, name: "Transfer snapshot to target", action: transfer_snapshot, retryable: true}
+      - {key: import_snapshot, name: "Import snapshot into target", action: import_snapshot, retryable: true, destructive: true, requires_approval: true}
+      - {key: technical_validation, name: "Technical validation (counts)", action: technical_validation, retryable: true}
+      - {key: data_reconciliation, name: "Business reconciliation (control totals)", action: data_reconciliation, retryable: true}
+      - {key: business_signoff, name: "Business sign-off", action: signoff, requires_approval: true}

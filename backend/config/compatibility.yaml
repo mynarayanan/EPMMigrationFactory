@@ -1,0 +1,19 @@
+# status: supported | remap_required | redesign_required | unsupported | review_required
+# group feeds the readiness model: metadata | artifact | integration | security | data
+default: {status: review_required, action: "Manual review by EPM consultant", group: artifact}
+rules:
+  - {artifact: dimensions, status: supported, action: "Snapshot import", group: metadata}
+  - {artifact: members, status: supported, action: "Snapshot import", group: metadata}
+  - {artifact: smart_lists, status: supported, action: "Snapshot import", group: metadata}
+  - {artifact: substitution_variables, status: supported, action: "Snapshot import", group: metadata}
+  - {artifact: forms, status: supported, action: "Snapshot import", group: artifact}
+  - {artifact: business_rules, status: supported, action: "Snapshot import", group: artifact}
+  - {artifact: dashboards, status: supported, action: "Snapshot import", group: artifact}
+  - {artifact: reports, status: supported, action: "Snapshot import", group: artifact}
+  - {artifact: menus, status: supported, action: "Snapshot import", group: artifact}
+  - {artifact: users, status: supported, action: "Re-provision via identity domain", group: security}
+  - {artifact: groups, status: supported, action: "Re-provision via identity domain", group: security}
+  - {artifact: data_intersections, status: supported, action: "Snapshot / data export-import", group: data}
+  - {artifact: custom_java_integration, status: redesign_required, action: "Redesign with Data Integration / REST", group: integration}
+  - {artifact: legacy_report_format, status: unsupported, action: "Rebuild report in current reporting tool", group: artifact}
+  - {artifact: file_based_integration, status: remap_required, action: "Remap file paths / endpoints", group: integration}

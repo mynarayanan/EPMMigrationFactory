@@ -1,0 +1,32 @@
+thresholds: {green: 90, amber: 75}
+categories:
+  source_assessment:
+    weight: 10
+    checks: [{id: source_inventory_collected, critical: true}, {id: source_inventory_complete}]
+  target_readiness:
+    weight: 15
+    checks: [{id: target_inventory_collected, critical: true}, {id: target_application_exists, critical: true}, {id: target_version_compatible, critical: true}]
+  connectivity:
+    weight: 10
+    checks: [{id: connectivity_all_pass, critical: true}]
+  security:
+    weight: 10
+    checks: [{id: security_inventory_present}, {id: privileged_access_reviewed}]
+  metadata:
+    weight: 15
+    checks: [{id: dimensions_present}, {id: no_blocking_metadata, critical: true}]
+  data:
+    weight: 15
+    checks: [{id: data_scope_defined}, {id: data_volume_within_capacity, critical: true}]
+  integrations:
+    weight: 10
+    checks: [{id: integrations_have_owners}, {id: no_blocking_integrations, critical: true}]
+  artifacts:
+    weight: 5
+    checks: [{id: no_blocking_artifacts, critical: true}]
+  performance:
+    weight: 5
+    checks: [{id: capacity_headroom}]
+  cutover:
+    weight: 5
+    checks: [{id: backup_plan_defined}, {id: rollback_defined}, {id: cutover_window_defined}]
