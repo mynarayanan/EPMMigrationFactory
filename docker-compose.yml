@@ -1,0 +1,24 @@
+services:
+  db:
+    image: postgres:16
+    environment: { POSTGRES_DB: epm, POSTGRES_USER: epm, POSTGRES_PASSWORD: "${DB_PASSWORD:?set DB_PASSWORD}" }
+    volumes: [pgdata:/var/lib/postgresql/data]
+    healthcheck: { test: ["CMD-SHELL", "pg_isready -U epm"], interval: 5s, retries: 10 }
+  api:
+    build: .
+    depends_on: { db: { condition: service_healthy } }
+    ports: ["8000:8000"]
+    environment:
+      DATABASE_URL: "postgresql+psycopg2://epm:${DB_PASSWORD}@db:5432/epm"
+      AUTO_MIGRATE: "true"            # fine for a single instance; use a separate migration step when scaling out
+      # Production uses SSO. For a local trial only, switch to: APP_ENV=development AUTH_MODE=dev DEV_PASSWORD=...
+      AUTH_MODE: "${AUTH_MODE:-oidc}"
+      OIDC_ISSUER: "${OIDC_ISSUER:-}"
+      OIDC_AUDIENCE: "${OIDC_AUDIENCE:-}"
+      OIDC_JWKS_URL: "${OIDC_JWKS_URL:-}"
+      ENABLE_DEMO: "${ENABLE_DEMO:-false}"
+      EPM_MOCK_STATE_DIR: /data/mock
+      # Live connectors: mount password files and name the env var that points at each
+      # EPM_SOURCE_PWF: /run/secrets/source.epw
+    volumes: [apidata:/data]
+volumes: { pgdata: {}, apidata: {} }
