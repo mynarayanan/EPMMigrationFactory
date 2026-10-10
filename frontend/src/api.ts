@@ -20,7 +20,13 @@ async function raw(path: string, init: RequestInit = {}): Promise<Response> {
   const headers = new Headers(init.headers);
   if (token) headers.set("Authorization", `Bearer ${token}`);
   if (init.body && !headers.has("Content-Type")) headers.set("Content-Type", "application/json");
-  const res = await fetch(`${BASE}${path}`, { ...init, headers });
+  let res: Response;
+  try {
+    res = await fetch(`${BASE}${path}`, { ...init, headers });
+  } catch {
+    // network failure, DNS, or a CORS block (browsers hide which): say where we tried to reach
+    throw new ApiError(0, `Cannot reach the API at ${BASE || window.location.origin}. Check VITE_API_BASE (UI build) and CORS_ORIGINS (API).`);
+  }
   if (!res.ok) {
     let detail = res.statusText;
     try {
@@ -41,6 +47,7 @@ export const api = {
   login: (username: string, password: string) => post<{ access_token: string }>("/api/auth/login", { username, password }),
   me: () => json<T.Me>("/api/me"),
   projects: () => json<T.Project[]>("/api/projects"),
+  createProject: (body: T.ProjectInput) => post<T.Project>("/api/projects", body),
   demo: (scenario: "clean" | "issues") => post<T.Project>("/api/projects/demo", { scenario }),
   project: (id: number) => json<T.ProjectDetail>(`/api/projects/${id}`),
   patchSettings: (id: number, body: T.Settings) => json<T.Project>(`/api/projects/${id}/settings`, { method: "PATCH", body: JSON.stringify(body) }),

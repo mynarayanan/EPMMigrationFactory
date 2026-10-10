@@ -17,9 +17,11 @@ export default function Projects() {
   return (
     <div className="stack">
       <div className="row spread"><h2>Migration portfolio</h2>
-        {cfg.data?.demo_enabled && <div className="row">
+        <div className="row">
+          <Link className="btn accent" to="/projects/new" aria-disabled={!me?.can.create_project} style={{ textDecoration: "none", ...(me?.can.create_project ? {} : { display: "none" }) }}>New project</Link>
+        {cfg.data?.demo_enabled && <>
           <button className="btn ghost" disabled={!me?.can.create_project} onClick={() => demo("clean")}>New demo (clean)</button>
-          <button className="btn ghost" disabled={!me?.can.create_project} onClick={() => demo("issues")}>New demo (with issues)</button></div>}
+          <button className="btn ghost" disabled={!me?.can.create_project} onClick={() => demo("issues")}>New demo (with issues)</button></>}</div>
       </div>
       {projects.isLoading ? <Empty>Loading…</Empty> : !projects.data?.length ? <Empty>No projects yet.{cfg.data?.demo_enabled ? " Create a demo project against the simulated EPM environment." : ""}</Empty> : (
         <div className="cards">{projects.data.map((p) => (

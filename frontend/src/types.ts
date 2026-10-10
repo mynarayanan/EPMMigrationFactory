@@ -1,6 +1,6 @@
 export type Role = "operator" | "approver" | "admin";
 export interface Me { username: string; roles: Role[]; can: Record<"create_project" | "configure" | "assess" | "execute" | "approve", boolean>; }
-export interface AppConfig { auth_mode: "dev" | "oidc"; demo_enabled: boolean; env: string; }
+export interface AppConfig { auth_mode: "dev" | "oidc"; demo_enabled: boolean; env: string; epm_host_suffixes: string[]; }
 export type GateStatus = "GREEN" | "AMBER" | "RED";
 export interface Gate { allowed: boolean; status: GateStatus | null; reason: string; score?: number; }
 export interface Project {
@@ -36,3 +36,12 @@ export interface Approval { subject: string; approver: string; decision: string;
 export interface AuditTrail { chain_intact: boolean; first_bad_id: number | null; entries: { id: number; ts: string; actor: string; action: string; details: Record<string, unknown> }[]; }
 export interface LogLine { ts: string; step: string; level: string; message: string; }
 export interface Inventory { product: string; version: string; application: string; counts: Record<string, number>; }
+
+export interface EnvInput {
+  connector: "mock" | "live"; url: string; version: string; profile: "clean" | "issues" | "empty_target" | "";
+  user: string; identity_domain: string; password_file_env: string;
+}
+export interface ProjectInput {
+  name: string; client: string; owner: string; planned_date: string; pattern: string; source: EnvInput; target: EnvInput;
+  settings: Settings;
+}

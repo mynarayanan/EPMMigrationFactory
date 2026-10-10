@@ -25,7 +25,7 @@ export default function Login() {
       <label>Password<input type="password" value={p} onChange={(e) => setP(e.target.value)} autoComplete="current-password" /></label>
       {err && <div className="alert" role="alert">{err}</div>}
       <button className="btn" disabled={busy || !u || !p}>Sign in</button>
-      <p className="muted">Development sign-in. Production uses SSO/OIDC.</p>
+      <p className="muted">Development sign-in. Users: olivia, alan, amy, root, sam. The password is the API's DEV_PASSWORD setting.</p>
     </form>
   );
 }

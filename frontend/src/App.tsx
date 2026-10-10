@@ -5,6 +5,7 @@ import { NotifyProvider } from "./notify";
 import Login from "./pages/Login";
 import Projects from "./pages/Projects";
 import ProjectPage from "./pages/ProjectPage";
+import NewProject from "./pages/NewProject";
 
 function Shell() {
   const { me, loading, logout } = useAuth();
@@ -18,7 +19,7 @@ function Shell() {
           <button className="btn ghost small" onClick={logout}>Sign out</button></div>
       </header>
       <main>
-        <Routes><Route path="/" element={<Projects />} /><Route path="/projects/:id" element={<ProjectPage />} /><Route path="*" element={<Navigate to="/" />} /></Routes>
+        <Routes><Route path="/" element={<Projects />} /><Route path="/projects/new" element={<NewProject />} /><Route path="/projects/:id" element={<ProjectPage />} /><Route path="*" element={<Navigate to="/" />} /></Routes>
       </main>
     </>
   );

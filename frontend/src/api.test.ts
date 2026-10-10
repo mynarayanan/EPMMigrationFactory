@@ -26,3 +26,8 @@ test("401 clears the token and triggers the unauthorized handler", async () => {
   await expect(api.projects()).rejects.toBeInstanceOf(ApiError);
   expect(getToken()).toBeNull(); expect(handler).toHaveBeenCalledOnce();
 });
+
+test("network/CORS failure explains where it tried to connect", async () => {
+  vi.spyOn(globalThis, "fetch").mockRejectedValue(new TypeError("Failed to fetch"));
+  await expect(api.config()).rejects.toMatchObject({ status: 0, message: expect.stringContaining("Cannot reach the API") });
+});

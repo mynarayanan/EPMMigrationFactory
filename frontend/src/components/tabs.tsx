@@ -74,11 +74,17 @@ export function ReadinessTab({ pid, detail }: TabProps) {
 }
 
 /* ───────────── Environments ───────────── */
-export function EnvironmentsTab({ pid }: TabProps) {
+export function EnvironmentsTab({ pid, detail }: TabProps) {
   const conn = useQuery({ queryKey: ["p", pid, "conn"], queryFn: () => api.connectivity(pid) });
   const inv = useQuery({ queryKey: ["p", pid, "inv"], queryFn: () => api.inventory(pid) });
   return (
     <div className="stack">
+      <h3>Configuration</h3>
+      <table aria-label="Environment configuration"><thead><tr><th>Side</th><th>Connection</th><th>Endpoint / profile</th><th>Account</th><th>Credential reference</th></tr></thead>
+        <tbody>{(["source", "target"] as const).map((side) => { const e = detail.project[side] as Record<string, string>; return (
+          <tr key={side}><td>{side}</td><td>{e.connector === "live" ? "Oracle Cloud EPM (live)" : "Simulated"}</td>
+            <td>{e.url || e.profile || "—"}</td><td>{e.user || "—"}{e.identity_domain ? ` @ ${e.identity_domain}` : ""}</td>
+            <td className="muted">{e.password_file_env ? `env: ${e.password_file_env}` : "—"}</td></tr>); })}</tbody></table>
       <h3>Connectivity</h3>
       {conn.data?.length ? (
         <table><thead><tr><th>Side</th><th>Check</th><th>Status</th><th>Detail</th></tr></thead>
