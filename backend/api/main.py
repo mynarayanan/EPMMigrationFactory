@@ -44,6 +44,11 @@ def create_app(settings: Settings | None = None, jwks_client=None) -> FastAPI:
     app = FastAPI(title="Oracle EPM Migration Workbench API", version="0.2.0", lifespan=lifespan)
     app.state.settings = settings
     app.state.auth = OidcAuth(settings, jwks_client) if settings.auth_mode == "oidc" else DevAuth(settings)
+    import os
+    if os.environ.get("CORS_ORIGIN") and not os.environ.get("CORS_ORIGINS"):
+        print("[epm] WARNING: found CORS_ORIGIN but the setting is named CORS_ORIGINS (plural). CORS is NOT configured.", flush=True)
+    print(f"[epm] database={settings.database_url.split('@')[-1] if '@' in settings.database_url else (settings.database_url or 'default sqlite')}", flush=True)
+    print(f"[epm] auth_mode={settings.auth_mode} env={settings.env} CORS allowed origins={list(settings.cors_origins) or 'NONE (set CORS_ORIGINS)'}", flush=True)
     if settings.cors_origins:
         app.add_middleware(CORSMiddleware, allow_origins=list(settings.cors_origins), allow_methods=["*"], allow_headers=["*"])
 

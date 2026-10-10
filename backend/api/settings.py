@@ -3,6 +3,15 @@ import os, secrets
 from dataclasses import dataclass, field
 
 
+def normalize_db_url(url: str) -> str:
+    """Hosts hand out postgres:// or postgresql://; SQLAlchemy 2 needs an explicit driver (psycopg2 is installed)."""
+    url = url.strip().strip('"').strip("'")
+    for prefix in ("postgres://", "postgresql://"):
+        if url.startswith(prefix):
+            return "postgresql+psycopg2://" + url[len(prefix):]
+    return url
+
+
 @dataclass(frozen=True)
 class Settings:
     env: str = "development"                    # development | production
@@ -21,6 +30,7 @@ class Settings:
     jwt_ttl_minutes: int = 60
     dev_password: str = field(default="", repr=False)
     # oidc
+    epm_host_suffixes: tuple = (".oraclecloud.com",)
     oidc_issuer: str = ""
     oidc_audience: str = ""
     oidc_jwks_url: str = ""
@@ -35,11 +45,13 @@ class Settings:
         rm = e("OIDC_ROLE_MAP")
         kw = dict(
             env="production" if prod else "development", auth_mode=e("AUTH_MODE", "oidc" if prod else "dev"),
-            database_url=e("DATABASE_URL", ""), mock_state_dir=e("EPM_MOCK_STATE_DIR", ".mock_state"),
-            cors_origins=tuple(x for x in e("CORS_ORIGINS", "").split(",") if x), static_dir=e("STATIC_DIR", ""),
+            database_url=normalize_db_url(e("DATABASE_URL", "")), mock_state_dir=e("EPM_MOCK_STATE_DIR", ".mock_state"),
+            cors_origins=tuple(x.strip().rstrip("/") for x in e("CORS_ORIGINS", "").split(",") if x.strip()), static_dir=e("STATIC_DIR", ""),
             enable_demo=e("ENABLE_DEMO", "false" if prod else "true").lower() == "true",
             job_workers=int(e("JOB_WORKERS", "4")), stale_seconds=int(e("JOB_STALE_SECONDS", "120")),
             auto_migrate=e("AUTO_MIGRATE", "false" if prod else "true").lower() == "true",
+            epm_host_suffixes=tuple(x.strip().lower() if x.strip().startswith(".") else "." + x.strip().lower()
+                                    for x in e("EPM_ALLOWED_HOST_SUFFIXES", ".oraclecloud.com").split(",") if x.strip()),
             dev_password=e("DEV_PASSWORD", ""), oidc_issuer=e("OIDC_ISSUER", ""), oidc_audience=e("OIDC_AUDIENCE", ""),
             oidc_jwks_url=e("OIDC_JWKS_URL", ""), oidc_user_claim=e("OIDC_USER_CLAIM", "preferred_username"),
             oidc_role_claim=e("OIDC_ROLE_CLAIM", "roles"))

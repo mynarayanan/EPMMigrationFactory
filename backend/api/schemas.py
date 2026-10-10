@@ -1,7 +1,8 @@
 from __future__ import annotations
 from datetime import datetime
+import re
 from typing import Any, Literal
-from pydantic import BaseModel, ConfigDict, Field, model_validator
+from pydantic import BaseModel, ConfigDict, Field, field_validator, model_validator
 
 
 class EnvConfig(BaseModel):
@@ -17,10 +18,25 @@ class EnvConfig(BaseModel):
     password_file_env: str = ""
     faults: dict[str, Any] = Field(default_factory=dict)
 
+    @field_validator("profile", mode="before")
+    @classmethod
+    def _blank_profile_is_none(cls, v):
+        return None if v in ("", None) else v
+
     @model_validator(mode="after")
     def _live(self):
-        if self.connector == "live" and not (self.url.startswith("https://") and self.user and self.password_file_env):
-            raise ValueError("live connector requires https url, user and password_file_env")
+        if self.connector == "live":
+            if not (self.url.startswith("https://") and self.user and self.password_file_env):
+                raise ValueError("live connector requires https url, user and password_file_env")
+            if self.faults or self.profile:
+                raise ValueError("faults/profile are only for the simulated connector")
+            # Only EPM_* names: a user must not be able to point the connector at DATABASE_URL, JWT_SECRET, etc.
+            if not re.fullmatch(r"EPM_[A-Z0-9_]{1,60}", self.password_file_env):
+                raise ValueError("password_file_env must be an environment variable name like EPM_SOURCE_PWF (EPM_ prefix, A-Z 0-9 _)")
+            if not re.fullmatch(r"[A-Za-z0-9._@\-]{1,100}", self.user):
+                raise ValueError("user contains unsupported characters")
+            if self.identity_domain and not re.fullmatch(r"[A-Za-z0-9._\-]{1,100}", self.identity_domain):
+                raise ValueError("identity_domain contains unsupported characters")
         return self
 
 
@@ -33,7 +49,7 @@ class ProjectCreate(BaseModel):
     pattern: str = "cloud_to_cloud"
     source: EnvConfig
     target: EnvConfig
-    settings: dict[str, Any] = Field(default_factory=dict)
+    settings: "SettingsPatch" = Field(default_factory=lambda: SettingsPatch())
 
 
 class DemoRequest(BaseModel):
@@ -88,3 +104,6 @@ class StepOut(Orm):
 class JobOut(Orm):
     id: int; project_id: int; mode: str; status: str; actor: str; result: dict; error: str
     created_at: datetime; finished_at: datetime | None = None
+
+
+ProjectCreate.model_rebuild()

@@ -12,6 +12,27 @@ from .auth import get_actor
 router = APIRouter(prefix="/api")
 
 
+def check_live_host(url: str, suffixes: tuple) -> None:
+    """Server-side request forgery guard: live URLs must be https, on the default port, carry no credentials,
+    not be an IP literal/localhost, and end with an allowed Oracle cloud suffix."""
+    import ipaddress
+    from urllib.parse import urlparse
+    u = urlparse(url)
+    host = (u.hostname or "").lower()
+    bad = None
+    if u.scheme != "https": bad = "URL must use https"
+    elif u.username or u.password: bad = "URL must not contain credentials"
+    elif u.port not in (None, 443): bad = "Only the default HTTPS port is allowed"
+    elif not host or host == "localhost": bad = "Host not allowed"
+    else:
+        try:
+            ipaddress.ip_address(host); bad = "IP addresses are not allowed; use the environment host name"
+        except ValueError:
+            if not any(host.endswith(s) for s in suffixes):
+                bad = f"Host must end with one of: {', '.join(suffixes)} (set EPM_ALLOWED_HOST_SUFFIXES to change)"
+    if bad: raise HTTPException(422, bad)
+
+
 def wb(request: Request): return request.app.state.wb
 def runner(request: Request): return request.app.state.runner
 
@@ -64,7 +85,7 @@ def me(actor: Actor = Depends(get_actor)):
 @router.get("/config")
 def public_config(request: Request):
     s = request.app.state.settings
-    return {"auth_mode": s.auth_mode, "demo_enabled": s.enable_demo, "env": s.env}
+    return {"auth_mode": s.auth_mode, "demo_enabled": s.enable_demo, "env": s.env, "epm_host_suffixes": list(s.epm_host_suffixes)}
 
 
 # ---- projects
@@ -78,9 +99,13 @@ def list_projects(w=Depends(wb), actor: Actor = Depends(get_actor)):
 
 
 @router.post("/projects", status_code=201)
-def create_project(body: S.ProjectCreate, w=Depends(wb), actor: Actor = Depends(get_actor)):
-    p = w.create_project(actor, body.name, body.source.model_dump(), body.target.model_dump(), body.client, body.owner,
-                         body.planned_date, body.pattern, body.settings)
+def create_project(body: S.ProjectCreate, request: Request, w=Depends(wb), actor: Actor = Depends(get_actor)):
+    actor.require("create_project")
+    for env in (body.source, body.target):
+        if env.connector == "live": check_live_host(env.url, request.app.state.settings.epm_host_suffixes)
+    p = w.create_project(actor, body.name, {**body.source.model_dump(exclude_defaults=True), "connector": body.source.connector},
+                         {**body.target.model_dump(exclude_defaults=True), "connector": body.target.connector},
+                         body.client, body.owner, body.planned_date, body.pattern, body.settings.model_dump(exclude_none=True))
     return _project_out(p)
 
 
